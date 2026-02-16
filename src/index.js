@@ -5,6 +5,11 @@ export default {
 		const originURL = "https://origin-rabastrim.iseries.my.id";
 		const url = new URL(request.url);
 
+		// Redirect if accessing via workers.dev
+		if (url.hostname.endsWith('workers.dev')) {
+			return Response.redirect('https://iseries.my.id' + url.pathname + url.search, 301);
+		}
+
 		// Construct the target URL (origin + path)
 		const targetUrl = new URL(url.pathname + url.search, originURL);
 

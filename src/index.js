@@ -1,4 +1,5 @@
 import html from './index.html';
+import { localize } from './i18n.js';
 
 export default {
 	async fetch(request, env, ctx) {
@@ -13,6 +14,17 @@ export default {
 		// Construct the target URL (origin + path)
 		const targetUrl = new URL(url.pathname + url.search, originURL);
 
+		// Testing Mode: Force maintenance page if ?maintenance=true
+		if (url.searchParams.get('maintenance') === 'true') {
+			const localizedHtml = localize(html, request.cf?.country);
+			return new Response(localizedHtml, {
+				status: 503,
+				headers: {
+					'content-type': 'text/html;charset=UTF-8',
+				},
+			});
+		}
+
 		try {
 			// Create a new request to the origin
 			// We clone the original request but point it to the new URL
@@ -22,8 +34,9 @@ export default {
 
 			// Check for bad gateway / service unavailable / gateway timeout
 			if (response.status === 502 || response.status === 503 || response.status === 504) {
-				// Return the maintenance page
-				return new Response(html, {
+				const localizedHtml = localize(html, request.cf?.country);
+
+				return new Response(localizedHtml, {
 					status: 503, // Service Unavailable
 					headers: {
 						'content-type': 'text/html;charset=UTF-8',
@@ -36,7 +49,9 @@ export default {
 
 		} catch (e) {
 			// Network error or other fetch failure -> Maintenance page
-			return new Response(html, {
+			const localizedHtml = localize(html, request.cf?.country);
+
+			return new Response(localizedHtml, {
 				status: 503,
 				headers: {
 					'content-type': 'text/html;charset=UTF-8',
